@@ -60,7 +60,7 @@ resource "aws_instance" "mws_ec2" {
               {
                 "metrics": {
                   "append_dimensions": {
-                    "InstanceId": "\${aws:InstanceId}"
+                    "InstanceId": "$${aws:InstanceId}"
                   },
                   "metrics_collected": {
                     "mem": {
