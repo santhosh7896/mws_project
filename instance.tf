@@ -1,22 +1,17 @@
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["amazon"]
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
-}
-
 resource "aws_iam_role" "cloudwatch_role" {
   name = "ec2-cloudwatch-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Principal = { Service = "ec2.amazonaws.com" },
-      Action = "sts:AssumeRole"
-    }]
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        },
+        Action = "sts:AssumeRole"
+      }
+    ]
   })
 }
 
@@ -31,31 +26,42 @@ resource "aws_iam_instance_profile" "cloudwatch_profile" {
 }
 
 resource "aws_instance" "mws_ec2" {
-  ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = var.instance_type
-  subnet_id              = aws_subnet.mws_subnet.id
-  vpc_security_group_ids = [aws_security_group.mws_sg.id]
-  iam_instance_profile   = aws_iam_instance_profile.cloudwatch_profile.name
+  ami                         = "ami-03f4878755434977f" # Amazon Linux 2 ARM64 for ap-south-1
+  instance_type               = "t3g.nano"
+  subnet_id                   = aws_subnet.mws_subnet.id
+  availability_zone           = "ap-south-1b"
   associate_public_ip_address = false
+  security_groups             = [aws_security_group.mws_sg.id]
+  key_name                    = var.key_name
+
+  iam_instance_profile        = aws_iam_instance_profile.cloudwatch_profile.name
 
   root_block_device {
     volume_type = "gp3"
     volume_size = 8
-    throughput  = 135
+    throughput  = 125
+  }
+
+  tags = {
+    Name = "mws-ec2"
   }
 
   user_data = <<-EOF
               #!/bin/bash
               yum update -y
-              amazon-linux-extras install docker -y
-              yum install -y git
+              yum install -y git docker
               systemctl start docker
               systemctl enable docker
               usermod -aG docker ec2-user
+
               cd /home/ec2-user
-              git clone https://github.com/YOUR-USERNAME/YOUR-REPO.git website
-              docker run -d -p 8000:80 -v /home/ec2-user/website:/usr/share/nginx/html nginx
+              git clone ${var.repo_url}
+              cd mws_project
+
+              docker run -d -p 8000:80 -v $(pwd)/index.html:/usr/share/nginx/html/index.html nginx
+
               yum install -y amazon-cloudwatch-agent
+
               cat <<EOC > /opt/aws/amazon-cloudwatch-agent/bin/config.json
               {
                 "metrics": {
@@ -64,18 +70,20 @@ resource "aws_instance" "mws_ec2" {
                   },
                   "metrics_collected": {
                     "mem": {
-                      "measurement": ["mem_used_percent"]
-                    },
-                    "disk": {
-                      "measurement": ["used_percent"],
-                      "resources": ["*"]
+                      "measurement": [
+                        "mem_used_percent"
+                      ],
+                      "metrics_collection_interval": 60
                     }
                   }
                 }
               }
               EOC
-              /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
-              EOF
 
-  tags = { Name = "mws-ec2" }
+              /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+                -a fetch-config \
+                -m ec2 \
+                -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json \
+                -s
+            EOF
 }

@@ -13,6 +13,12 @@ resource "aws_lb_target_group" "nlb_target" {
   vpc_id      = aws_vpc.mws_vpc.id
 }
 
+resource "aws_lb_target_group_attachment" "nlb_attach" {
+  target_group_arn = aws_lb_target_group.nlb_target.arn
+  target_id        = aws_instance.mws_ec2.id
+  port             = 8000
+}
+
 resource "aws_lb_listener" "nlb_listener" {
   load_balancer_arn = aws_lb.nlb.arn
   port              = 8000
@@ -22,10 +28,4 @@ resource "aws_lb_listener" "nlb_listener" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.nlb_target.arn
   }
-}
-
-resource "aws_lb_target_group_attachment" "nlb_attachment" {
-  target_group_arn = aws_lb_target_group.nlb_target.arn
-  target_id        = aws_instance.mws_ec2.id
-  port             = 8000
 }
