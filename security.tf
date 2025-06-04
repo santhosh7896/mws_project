@@ -5,7 +5,7 @@ resource "aws_security_group" "mws_sg" {
   ingress {
     from_port   = 8000
     to_port     = 8000
-    protocol    = "udp"
+    protocol    = "tcp"  # ✅ Change this from "udp" to "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
