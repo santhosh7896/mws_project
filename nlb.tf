@@ -20,7 +20,7 @@ resource "aws_lb_target_group_attachment" "nlb_attach" {
 }
 
 resource "aws_lb_listener" "nlb_listener" {
-  load_balancer_arn = aws_lb.arn
+  load_balancer_arn = aws_lb.nlb.arn
   port              = 8000
   protocol          = "TCP"
 
