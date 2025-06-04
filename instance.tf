@@ -26,8 +26,8 @@ resource "aws_iam_instance_profile" "cloudwatch_profile" {
 }
 
 resource "aws_instance" "mws_ec2" {
-  ami                         = "ami-03f4878755434977f" # Amazon Linux 2 ARM64 for ap-south-1
-  instance_type               = "t3g.nano"
+  ami                         = "ami-03f4878755434977f" # Amazon Linux 2 x86_64 (gp2) for ap-south-1
+  instance_type               = "t3.nano"
   subnet_id                   = aws_subnet.mws_subnet.id
   availability_zone           = "ap-south-1b"
   associate_public_ip_address = false
