@@ -8,7 +8,7 @@ resource "aws_lb" "nlb" {
 resource "aws_lb_target_group" "nlb_target" {
   name        = "mws-target-group"
   port        = 8000
-  protocol    = "UDP"
+  protocol    = "TCP"
   target_type = "instance"
   vpc_id      = aws_vpc.mws_vpc.id
 }
@@ -20,9 +20,9 @@ resource "aws_lb_target_group_attachment" "nlb_attach" {
 }
 
 resource "aws_lb_listener" "nlb_listener" {
-  load_balancer_arn = aws_lb.nlb.arn
+  load_balancer_arn = aws_lb.arn
   port              = 8000
-  protocol          = "UDP"
+  protocol          = "TCP"
 
   default_action {
     type             = "forward"
