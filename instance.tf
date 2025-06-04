@@ -32,7 +32,7 @@ resource "aws_instance" "mws_ec2" {
   availability_zone           = "ap-south-1b"
   associate_public_ip_address = false
   security_groups             = [aws_security_group.mws_sg.id]
-  key_name                    = var.key_name
+  key_name                    = "Projectkeypair"
 
   iam_instance_profile        = aws_iam_instance_profile.cloudwatch_profile.name
 
